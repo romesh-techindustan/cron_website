@@ -27,23 +27,24 @@ func AddWebsites(c *gin.Context) {
 	var website models.Websites
 	name := c.PostForm("name")
 	web := c.PostForm("web")
-	website.Name =name
+	website.Name = name
 	website.Web = web
 }
 
 func AddSOSUser(c *gin.Context) {
 	var user models.SOS_User
-	email:= c.PostForm("email")
-	user.Email=email
+	email := c.PostForm("email")
+	user.Email = email
 
 }
 
 func GetAllWebsites(c *gin.Context) {
 	var web models.Websites
-	id :=c.Param("id")
-	err:= database.Init().QueryRow("select * from websites where id=?",id)
-	if err!= nil{
-		c.JSON(http.StatusNotAcceptable,gin.H{"error": "Invalid id"})
+
+	id := c.Param("id")
+	err := database.Init().QueryRow("select * from websites where id=?", id)
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": "Invalid id"})
 	}
 	c.JSON(http.StatusOK, &web)
 
@@ -52,7 +53,7 @@ func GetAllWebsites(c *gin.Context) {
 func GetSOSUsername(c *gin.Context) {
 	var user models.User
 	id := c.Param("id")
-	err := database.Init().QueryRow("select * from sos_users where id=?",id)
+	err := database.Init().QueryRow("select * from sos_users where id=?", id)
 	if err == nil {
 		c.JSON(200, &user)
 	} else {
@@ -61,7 +62,29 @@ func GetSOSUsername(c *gin.Context) {
 }
 
 func StatusCode(c *gin.Context) {
+	var status models.Status_code
+	id := c.Param("id")
+	err := database.Init().QueryRow("select * from status_code where id=?", id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Not a valid ID"})
+	} else {
+		c.JSON(http.StatusOK, &status)
+	}
 	return
+}
+
+func PostStatusCode(c *gin.Context) {
+	var status models.Status_code
+	var web_id = c.PostForm("id") 
+	code := c.PostForm("code")
+	status.Web_id = web_id
+	status.Code = code
+
+	err:= database.Init().QueryRow("insert into status_code (web_id, code) values (?,?)", status.Web_id, status.Code)
+	if err!= nil{
+
+	}
+
 }
 
 func Login(c *gin.Context) {
@@ -73,7 +96,7 @@ func Login(c *gin.Context) {
 	var storedHashedPassword string
 	err := database.Init().QueryRow("select * from flower where id = ?;", user.Email).Scan(&storedHashedPassword)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized,gin.H{"error":"Invalid email or Password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or Password"})
 	}
 	fmt.Println(err)
 
@@ -95,9 +118,9 @@ func SignUp(c *gin.Context) {
 	hashedPassword := hashPassword([]byte(password))
 	user.HashPassword = hashedPassword
 
-	err := database.Init().QueryRow("INSERT INTO users (name, email, password) VALUES (?,?,?,?);", user.Name,user.Email,user.HashPassword)
-	if err!=nil{
-		c.JSON(http.StatusUnauthorized,gin.H{"error":"Cannot insert into table"})
+	err := database.Init().QueryRow("INSERT INTO users (name, email, password) VALUES (?,?,?,?);", user.Name, user.Email, user.HashPassword)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Cannot insert into table"})
 	}
 
 	// c.JSON(http.StatusOK, gin.H{"email": user.Email,"username":user.Name})
